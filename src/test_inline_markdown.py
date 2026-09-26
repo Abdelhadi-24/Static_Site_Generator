@@ -1,7 +1,7 @@
 import unittest
 
 from inline_markdown import (
-    split_nodes_delimiter, extract_markdown_images, extract_markdown_links
+    split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link
 )
 from textnode import TextNode, TextType
 
@@ -158,6 +158,134 @@ class TestInlineMarkdown(unittest.TestCase):
         )
 
         self.assertListEqual([], matches)
+
+    #  split links and imgs
+
+    def test_split_images(self):
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) "
+            "and another ![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+
+        new_nodes = split_nodes_image([node])
+
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode(
+                    "image",
+                    TextType.IMAGE,
+                    "https://i.imgur.com/zjjcJKZ.png",
+                ),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second image",
+                    TextType.IMAGE,
+                    "https://i.imgur.com/3elNhQu.png",
+                ),
+            ],
+            new_nodes,
+        )
+
+
+    def test_split_links(self):
+        node = TextNode(
+            "This is text with a [link](https://example.com) "
+            "and another [link](https://google.com)",
+            TextType.TEXT,
+        )
+
+        new_nodes = split_nodes_link([node])
+
+        self.assertListEqual(
+            [
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode(
+                    "link",
+                    TextType.LINK,
+                    "https://example.com",
+                ),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "link",
+                    TextType.LINK,
+                    "https://google.com",
+                ),
+            ],
+            new_nodes,
+        )
+
+
+    def test_no_images(self):
+        node = TextNode(
+            "There are no images here",
+            TextType.TEXT,
+        )
+
+        self.assertListEqual(
+            [node],
+            split_nodes_image([node]),
+        )
+
+
+    def test_no_links(self):
+        node = TextNode(
+            "There are no links here",
+            TextType.TEXT,
+        )
+
+        self.assertListEqual(
+            [node],
+            split_nodes_link([node]),
+        )
+
+
+    def test_existing_non_text_node(self):
+        node = TextNode(
+            "already bold",
+            TextType.BOLD,
+        )
+
+        self.assertListEqual(
+            [node],
+            split_nodes_image([node]),
+        )
+
+        self.assertListEqual(
+            [node],
+            split_nodes_link([node]),
+        )
+
+
+    def test_image_at_start(self):
+        node = TextNode(
+            "![cat](cat.png) after",
+            TextType.TEXT,
+        )
+
+        self.assertListEqual(
+            [
+                TextNode("cat", TextType.IMAGE, "cat.png"),
+                TextNode(" after", TextType.TEXT),
+            ],
+            split_nodes_image([node]),
+        )
+
+
+    def test_image_at_end(self):
+        node = TextNode(
+            "before ![cat](cat.png)",
+            TextType.TEXT,
+        )
+
+        self.assertListEqual(
+            [
+                TextNode("before ", TextType.TEXT),
+                TextNode("cat", TextType.IMAGE, "cat.png"),
+            ],
+            split_nodes_image([node]),
+        )
 
 
 
