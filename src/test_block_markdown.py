@@ -1,6 +1,6 @@
 import unittest
 
-from block_markdown import markdown_to_blocks
+from block_markdown import markdown_to_blocks, BlockType, block_to_block_type
 
 
 class TestMarkdownToBlocks(unittest.TestCase):
@@ -88,4 +88,98 @@ Third paragraph
                 "First paragraph",
                 "Second paragraph",
             ],
+        )
+
+    def test_paragraph(self):
+        block = "This is a normal paragraph."
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.PARAGRAPH,
+        )
+
+    def test_heading(self):
+        self.assertEqual(
+            block_to_block_type("# Heading"),
+            BlockType.HEADING,
+        )
+
+        self.assertEqual(
+            block_to_block_type("###### Heading"),
+            BlockType.HEADING,
+        )
+
+    def test_invalid_heading(self):
+        self.assertEqual(
+            block_to_block_type("####### Heading"),
+            BlockType.PARAGRAPH,
+        )
+
+        self.assertEqual(
+            block_to_block_type("#Heading"),
+            BlockType.PARAGRAPH,
+        )
+
+    def test_code(self):
+        block = "```\nprint('hello')\n```"
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.CODE,
+        )
+
+    def test_quote(self):
+        block = "> This is a quote\n> This is another line"
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.QUOTE,
+        )
+
+    def test_invalid_quote(self):
+        block = "> This is a quote\nThis is not"
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.PARAGRAPH,
+        )
+
+    def test_unordered_list(self):
+        block = "- First\n- Second\n- Third"
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.UNORDERED_LIST,
+        )
+
+    def test_invalid_unordered_list(self):
+        block = "- First\nSecond\n- Third"
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.PARAGRAPH,
+        )
+
+    def test_ordered_list(self):
+        block = "1. First\n2. Second\n3. Third"
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.ORDERED_LIST,
+        )
+
+    def test_invalid_ordered_list(self):
+        block = "1. First\n3. Second\n4. Third"
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.PARAGRAPH,
+        )
+
+    def test_ordered_list_must_start_at_one(self):
+        block = "2. First\n3. Second"
+
+        self.assertEqual(
+            block_to_block_type(block),
+            BlockType.PARAGRAPH,
         )
